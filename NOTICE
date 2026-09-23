@@ -1,0 +1,13 @@
+laya-serve
+Copyright 2026 c4bbage
+
+This product includes logic ported from the "laya" Python package
+(https://pypi.org/project/laya/, https://huggingface.co/convaiinnovations/laya),
+Copyright Convai Innovations, licensed under the Apache License, Version 2.0:
+sequence building (build_sequence / render_options), answer post-processing and
+the DecisionModel forward pass reproduced in python/export_onnx.py.
+
+Laya model weights are distributed by Convai Innovations under their own terms and
+are not included in this repository.
+
+This project is not affiliated with or endorsed by Convai Innovations.

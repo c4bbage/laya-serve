@@ -1,0 +1,26 @@
+# build outputs
+/run/
+*.exe
+go/goserve/goserve
+go/bench/bench
+go/paritycheck/paritycheck
+go/layagate/layagate
+
+# exported models, engines, dumps (regenerate with python/export_onnx.py)
+*.onnx
+*.onnx.data
+*.engine
+trtcache*/
+laya_vocab.json
+laya_merges.json
+laya_go_cfg.json
+laya_token_probe.json
+laya_parity.jsonl
+laya_logits_sample.json
+_downloads/
+*.dll
+*.log
+results_*.txt
+__pycache__/
+.venv/
+.DS_Store
