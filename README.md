@@ -21,9 +21,21 @@ A single Go binary does tokenization, sequence building, dynamic batching and po
 | `python/patch_mask.py` | Replaces overflow-prone attention-mask constants |
 | `python/quantize_fp8.py` | FP8 PTQ with NVIDIA ModelOpt (documented, not recommended on Ada) |
 | `scripts/bench_sweep.sh`, `windows/*.ps1` | Precision × concurrency sweeps (Linux / Windows) |
+| `examples/basic.jsonl` | Small mixed-language request set covering all question types (default fixtures) |
+| `examples/mahjong/` | The use case the benchmarks came from: data converter, evaluator and hand-written samples |
 | `docs/BENCHMARKS.md` | Full measurements and the debugging notes behind them |
 
-## Results (RTX 4090, 2884 real decision requests, ~400 tokens each)
+## Supported models
+
+| Laya checkpoint | Status |
+|---|---|
+| `multilingual` (mmBERT-base, 322M, 1024 tokens, 100+ languages incl. English and Chinese), base or your own fine-tune | **Supported and parity-tested** |
+| English base (ModernBERT-large, 421M, 512 tokens) | Not supported yet: it uses a byte-level BPE tokenizer that `layago` does not implement |
+| `typed-decisions` fine-tune | Not tested |
+
+Nothing in the server is task-specific. Any state/questions payload that `laya.predict` accepts works, with all three question types (`choice`, `score`, `noul`).
+
+## Results (RTX 4090, 2884 real decision requests from a mahjong game, ~400 tokens each)
 
 Max throughput within a 600 ms p99 budget:
 
@@ -52,7 +64,7 @@ Requirements: Go 1.26+, Python with `laya` (0.3.5) and PyTorch with a CUDA GPU f
 ```bash
 # 1. export the model + tokenizer + parity dumps (from the examples, or your own jsonl)
 mkdir run && cd run
-python ../python/export_onnx.py ../examples/laya_smoke.jsonl   # model from HF: convaiinnovations/laya
+python ../python/export_onnx.py ../examples/basic.jsonl   # model from HF: convaiinnovations/laya
 python ../python/patch_mask.py laya.onnx laya32s.onnx
 
 # 2. build
@@ -60,10 +72,10 @@ python ../python/patch_mask.py laya.onnx laya32s.onnx
 
 # 3. verify the Go stack matches Python
 ./paritycheck -mode tokens -dir .
-./paritycheck -mode seq    -dir . -fixtures ../examples/laya_smoke.jsonl
+./paritycheck -mode seq    -dir . -fixtures ../examples/basic.jsonl
 export LD_LIBRARY_PATH=/path/to/onnxruntime/lib:/path/to/tensorrt/lib:/path/to/cuda/libs
 export ORT_LIB=/path/to/onnxruntime/lib/libonnxruntime.so
-TRT_CACHE=$PWD/trtcache ./paritycheck -mode full -provider trt -gpu 0 -onnx laya32s.onnx -fixtures ../examples/laya_smoke.jsonl
+TRT_CACHE=$PWD/trtcache ./paritycheck -mode full -provider trt -gpu 0 -onnx laya32s.onnx -fixtures ../examples/basic.jsonl
 
 # 4. serve (first start builds the TensorRT engine, a few minutes; cached afterwards)
 GOSERVE_PROVIDER=trt GOSERVE_GPUS=0 ONNX_PATH=laya32s.onnx TRT_CACHE=$PWD/trtcache LISTEN=:8320 ./goserve
@@ -78,7 +90,7 @@ curl -s localhost:8320/predict -d '{
   }}'
 
 # 6. load test
-./bench -u http://127.0.0.1:8320/predict -c 128 -d 20s -f ../examples/laya_smoke.jsonl -slo 600ms
+./bench -u http://127.0.0.1:8320/predict -c 128 -d 20s -f ../examples/basic.jsonl -slo 600ms
 ```
 
 The base checkpoint is not tuned for any task (Laya's model card reports near-chance zero-shot accuracy); fine-tune it for your workflow, then re-export and re-run `paritycheck`.

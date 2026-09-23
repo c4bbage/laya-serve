@@ -1,7 +1,7 @@
 """Export laya to ONNX + dump everything the Go reimplementation needs.
 
 Usage:
-  python export_onnx.py [fixtures.jsonl]        # default: ../examples/laya_smoke.jsonl
+  python export_onnx.py [fixtures.jsonl]        # default: ../examples/basic.jsonl
   LAYA_MODEL=/local/path python export_onnx.py  # default: convaiinnovations/laya (HF hub)
   ONLY_FP32=1 ONNX_OUT=laya32.onnx python export_onnx.py   # just the fp32 graph
 
@@ -28,7 +28,7 @@ from laya.common import build_sequence, collate_items, QTYPES
 MODEL = os.environ.get("LAYA_MODEL", "convaiinnovations/laya")
 SUB = os.environ.get("LAYA_SUBFOLDER", "multilingual")
 FIXTURES = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", "examples", "laya_smoke.jsonl")
+    os.path.dirname(os.path.abspath(__file__)), "..", "examples", "basic.jsonl")
 N_LOGIT_SAMPLE = 64
 ONNX_OUT = os.environ.get("ONNX_OUT", "laya.onnx")
 ONLY_FP32 = os.environ.get("ONLY_FP32") == "1"  # stop after the fp32 export (no cfg/vocab/parity rewrite)

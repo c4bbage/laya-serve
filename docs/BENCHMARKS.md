@@ -3,7 +3,7 @@
 All numbers below were measured in September 2026 on one server with 2 × RTX 4090 (24 GB, sm_89). **Both GPUs were shared with other production services**, so absolute numbers are a floor rather than a ceiling, and the same configuration measured at different times varied by about 5%.
 
 - Model: Laya `multilingual` checkpoint (mmBERT-base encoder, 322M parameters), **not fine-tuned**.
-- Workload: 2884 real Sichuan-mahjong decision requests (4436 questions, 1.5 questions per request, ~400 tokens per question, 1-14 options). The data is proprietary and not included; `examples/` has synthetic samples in the same format.
+- Workload: 2884 real Sichuan-mahjong decision requests (4436 questions, 1.5 questions per request, ~400 tokens per question, 1-14 options). The data is proprietary and not included; `examples/mahjong/` has hand-written samples in the same format.
 - SLO: a concurrency level "passes" if ≥ 99% of requests complete within 600 ms. "Max throughput" is the best passing level.
 - Agreement: the share of the 4436 questions whose argmax matches the Python `laya` package on GPU (bf16 autocast). It measures whether a faster stack changes the model's answers, not decision quality.
 
@@ -90,4 +90,4 @@ Side note: ModelOpt's recorded activation amax was consistently 12.44× the fp32
 
 ## 5. Reproducing
 
-`scripts/bench_sweep.sh` (Linux) and `windows/run_sweep.ps1` (Windows) run parity plus a concurrency sweep for each precision. Use your own request log in the `examples/laya_smoke.jsonl` format for meaningful numbers: throughput depends heavily on tokens per question and questions per request.
+`scripts/bench_sweep.sh` (Linux) and `windows/run_sweep.ps1` (Windows) run parity plus a concurrency sweep for each precision. Use your own request log in the `examples/basic.jsonl` format for meaningful numbers: throughput depends heavily on tokens per question and questions per request.

@@ -1,7 +1,7 @@
 """Evaluate Laya on converted mahjong typed-decisions data.
 
 Usage:
-    python eval_laya_mahjong.py --data laya_mahjong_test.jsonl [--url http://localhost:8000]
+    python eval_laya_mahjong.py --data laya_smoke.jsonl [--url http://localhost:8000]
 
 Metrics per question id:
     - top-1 accuracy (argmax == gold label)

@@ -28,6 +28,14 @@ laya-serve 用一个 Go 二进制完成分词、序列构建、动态攒批、�
 
 快速开始和配置项见 [README](../README.md)，完整测试数据与排查过程见 [BENCHMARKS](BENCHMARKS.md)。
 
+## 支持的模型
+
+- **Laya multilingual**（mmBERT 322M，1024 上下文，100+ 语言含中英文）：支持，底座或自己微调的版本都可以，已做 parity 验证
+- Laya 英文版（ModernBERT-large 421M）：暂不支持，它用 byte-level BPE 分词器，Go 端未实现
+- typed-decisions 微调版：未测试
+
+服务本身与具体业务无关，`examples/basic.jsonl` 是通用示例；麻将只是我们的测试场景，相关脚本在 `examples/mahjong/`。
+
 ## 注意
 
 - 底座模型未针对任何任务微调，零样本接近随机水平。请先按 Laya 的 RLCD 流程微调，再重新导出并跑 `paritycheck`。

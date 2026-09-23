@@ -1,6 +1,6 @@
 // bench: load generator replaying laya request fixtures (jsonl: {state, questions}).
 //
-// Usage: ./bench -u http://127.0.0.1:8303/predict -c 16 -d 20s -f laya_smoke.jsonl [-slo 600ms] [-warm 2s]
+// Usage: ./bench -u http://127.0.0.1:8303/predict -c 16 -d 20s -f basic.jsonl [-slo 600ms] [-warm 2s]
 package main
 
 import (
@@ -28,7 +28,7 @@ func main() {
 		url  = flag.String("u", "http://127.0.0.1:8303/predict", "target url")
 		conc = flag.Int("c", 8, "concurrency")
 		dur  = flag.Duration("d", 20*time.Second, "duration")
-		file = flag.String("f", "laya_smoke.jsonl", "fixture jsonl")
+		file = flag.String("f", "basic.jsonl", "fixture jsonl")
 		slo  = flag.Duration("slo", 600*time.Millisecond, "SLO")
 		warm = flag.Duration("warm", 2*time.Second, "warmup (not counted)")
 	)

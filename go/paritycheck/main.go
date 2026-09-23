@@ -67,7 +67,7 @@ func main() {
 	case "tokens":
 		checkTokens(dir, tok, cfg)
 	case "seq":
-		checkSeq(dir, fl.get("fixtures", dir+"/laya_smoke.jsonl"), tok, cfg, nil)
+		checkSeq(dir, fl.get("fixtures", dir+"/basic.jsonl"), tok, cfg, nil)
 	case "full":
 		if err := layago.Init(fl.get("ortlib", os.Getenv("ORT_LIB"))); err != nil {
 			die("ort init: %v", err)
@@ -86,7 +86,7 @@ func main() {
 		if err != nil {
 			die("engine: %v", err)
 		}
-		checkSeq(dir, fl.get("fixtures", dir+"/laya_smoke.jsonl"), tok, cfg, eng)
+		checkSeq(dir, fl.get("fixtures", dir+"/basic.jsonl"), tok, cfg, eng)
 	default:
 		die("unknown mode %s", mode)
 	}
@@ -109,7 +109,7 @@ func checkTokens(dir string, tok *layago.Tokenizer, cfg *layago.Cfg) {
 		e := eAny.(*layago.Obj)
 		state := e.M["state"]
 		wantState := idsOf(e.M["state_ids"])
-		gotState := tok.Encode(layago.ReplaceMask(layago.PyDumps(state), cfg.MaskToken))
+		gotState := tok.Encode(layago.ReplaceMask(layago.SerializeState(state), cfg.MaskToken))
 		nState++
 		if !eq(gotState, wantState) {
 			bad++
@@ -235,6 +235,9 @@ func checkSeq(dir, fixtures string, tok *layago.Tokenizer, cfg *layago.Cfg, eng 
 				if nBad <= 3 {
 					fmt.Printf("SEQ MISMATCH %s/%s: ids %d vs %d, markers %d vs %d\n",
 						fx.ID, qid, len(it.IDs), len(want.IDs), len(it.Markers), len(want.Markers))
+					if os.Getenv("PARITY_VERBOSE") != "" {
+						fmt.Printf("  go   %v %v\n  want %v %v\n", it.IDs, it.Markers, want.IDs, want.Markers)
+					}
 				}
 			}
 			items = append(items, it)

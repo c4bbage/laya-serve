@@ -153,6 +153,9 @@ func ReplaceMask(s, mask string) string {
 	return strings.ReplaceAll(s, mask, " ")
 }
 
+// SerializeState exposes serializeState (strings pass through, others are JSON-dumped).
+func SerializeState(state any) string { return serializeState(state) }
+
 // PyDumps exposes pyDumps for callers.
 func PyDumps(v any) string { return pyDumps(v) }
 
@@ -197,12 +200,14 @@ func BuildSequence(tok *Tokenizer, cfg *Cfg, state any, q *QInternal) (*Item, er
 			optBudget -= len(o)
 		}
 	}
-	hl := len(headIDs)
-	if hl > optBudget {
-		hl = optBudget
+	// Python: head_ids[: max(8, opt_budget)] -- a slice, so short heads stay short
+	limit := optBudget
+	if limit < 8 {
+		limit = 8
 	}
-	if hl < 8 {
-		hl = 8
+	hl := len(headIDs)
+	if hl > limit {
+		hl = limit
 	}
 
 	ids := make([]int32, 0, cfg.MaxLen)

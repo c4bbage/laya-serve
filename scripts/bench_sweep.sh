@@ -2,14 +2,14 @@
 # Precision x concurrency sweep for goserve + TensorRT on one GPU (Linux).
 #
 #   ORT_DIR=/path/to/onnxruntime/lib TRT_DIR=/path/to/tensorrt/lib CUDA_LIBS=/path/a:/path/b \
-#   GPU=0 FIXTURES=../examples/laya_smoke.jsonl ./bench_sweep.sh
+#   GPU=0 FIXTURES=../examples/basic.jsonl ./bench_sweep.sh
 #
 # Expects in the working directory: goserve, bench, paritycheck binaries, laya_vocab.json,
 # laya_merges.json, laya_go_cfg.json, laya_parity.jsonl and the ONNX files listed in VARIANTS.
 # First run of each variant builds a TensorRT engine (minutes), cached in trtcache_<name>/.
 set -u
 GPU=${GPU:-0}
-FIXTURES=${FIXTURES:-laya_smoke.jsonl}
+FIXTURES=${FIXTURES:-basic.jsonl}
 CONC=${CONC:-"1 32 64 128 192 256 384"}
 PORT=${PORT:-8329}
 export LD_LIBRARY_PATH=${ORT_DIR:-}:${TRT_DIR:-}:${CUDA_LIBS:-}:${LD_LIBRARY_PATH:-}

@@ -1,13 +1,13 @@
 # Precision x concurrency sweep for one GPU: parity (vs Python bf16 reference) + goserve/bench.
 # First run of each variant builds a TensorRT engine for this GPU (several minutes, cached in trtcache_<name>\).
-# Usage:  powershell -ExecutionPolicy Bypass -File run_sweep.ps1 [-Gpu 0] [-Only fp16,fp8] [-SkipParity] [-Fixtures laya_smoke.jsonl]
+# Usage:  powershell -ExecutionPolicy Bypass -File run_sweep.ps1 [-Gpu 0] [-Only fp16,fp8] [-SkipParity] [-Fixtures basic.jsonl]
 param(
     [string]$Gpu = "0",
     [string[]]$Only = @(),
     [switch]$SkipParity,
     [int[]]$Conc = @(1, 64, 128, 192, 256, 384),
     [int]$BatchMax = 48,
-    [string]$Fixtures = "laya_smoke.jsonl"
+    [string]$Fixtures = "basic.jsonl"
 )
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
