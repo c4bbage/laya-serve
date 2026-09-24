@@ -55,7 +55,9 @@ Precision (TensorRT, one GPU, argmax agreement with the Python bf16 reference on
 | bf16 | 97.23% | 318 rps |
 | FP8 (ModelOpt PTQ) | 89.52% | ~430 rps |
 
-GPUs were shared with other services; same-config run-to-run noise was about 5%. Details and caveats: [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+GPUs were shared with other services; same-config run-to-run noise was about 5%.
+
+On a dedicated **RTX 5090 D** (Windows) the same fp16 setup serves **571 rps** on one GPU (+42%), with 97.59% agreement and ~15 ms single-request latency. Details and caveats: [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
 ## Quick start (Linux, NVIDIA GPU)
 
@@ -136,7 +138,7 @@ cd go && for t in goserve bench paritycheck; do
     go build -trimpath -ldflags "-s -w -extldflags=-static" -o ../windows/$t.exe ./$t; done
 ```
 
-`windows/setup.ps1` downloads ONNX Runtime 1.30 (CUDA 12), TensorRT 10.13, CUDA 12.9 runtime/cuBLAS and cuDNN 9 next to the exes; `windows/run_sweep.ps1` runs the precision × concurrency sweep. Not yet validated on real Windows hardware.
+`windows/setup.ps1` downloads ONNX Runtime 1.30 (CUDA 12), TensorRT 10.13, CUDA 12.9 runtime/cuBLAS/cuFFT and cuDNN 9 next to the exes (and skips the download if the DLLs are already there, e.g. copied from another machine); `windows/run_sweep.ps1` runs the precision × concurrency sweep. Validated on an RTX 5090 D (driver 591.86); needs the VC++ 2015-2022 x64 runtime.
 
 ## License
 

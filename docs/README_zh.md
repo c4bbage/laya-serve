@@ -18,6 +18,8 @@ laya-serve 用一个 Go 二进制完成分词、序列构建、动态攒批、�
 
 吞吐指 99% 请求在 600ms 内返回时的最大值，测试数据为 2884 条真实麻将决策请求（每题约 400 token），GPU 与其他服务共享。
 
+换到独占的 **RTX 5090 D**（Windows），同一套 fp16 配置单卡 **571 rps**（+42%），一致率 97.59%，单次延迟约 15ms。
+
 ## 主要内容
 
 - **Go 推理栈**（`go/layago`）：SentencePiece BPE 分词、序列构建、choice / score / noul 三种题型的后处理，与 Python `laya` 逐 token 一致（`paritycheck` 验证）

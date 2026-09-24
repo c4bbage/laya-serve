@@ -1,6 +1,6 @@
 # Benchmarks and engineering notes
 
-All numbers below were measured in September 2026 on one server with 2 × RTX 4090 (24 GB, sm_89). **Both GPUs were shared with other production services**, so absolute numbers are a floor rather than a ceiling, and the same configuration measured at different times varied by about 5%.
+Sections 1-4 were measured in September 2026 on one server with 2 × RTX 4090 (24 GB, sm_89). **Both GPUs were shared with other production services**, so absolute numbers are a floor rather than a ceiling, and the same configuration measured at different times varied by about 5%. Section 5 is a dedicated RTX 5090 D on Windows.
 
 - Model: Laya `multilingual` checkpoint (mmBERT-base encoder, 322M parameters), **not fine-tuned**.
 - Workload: 2884 real Sichuan-mahjong decision requests (4436 questions, 1.5 questions per request, ~400 tokens per question, 1-14 options). The data is proprietary and not included; `examples/mahjong/` has hand-written samples in the same format.
@@ -88,6 +88,33 @@ Result: +7-9% throughput, no latency change, agreement 97.3% → 89.5%. The loss
 
 Side note: ModelOpt's recorded activation amax was consistently 12.44× the fp32 amax we measured directly (66 tensors); overwriting the scales with the measured values did not improve agreement (89.09%).
 
-## 5. Reproducing
+## 5. RTX 5090 D (Windows, dedicated GPU)
+
+RTX 5090 D 32 GB (sm_120), driver 591.86, Windows x64, ONNX Runtime 1.30 (CUDA 12) + TensorRT 10.13.3 + CUDA 12.9 + cuDNN 9, run with `windows/run_sweep.ps1`. Same workload, same SLO, `BATCH_MAX=48`, 10 ms window. Unlike the 4090 runs, **the GPU was not shared**, so part of the gap comes from that.
+
+One GPU (rps / p95; c=1 shows p50):
+
+| Precision | Agreement | c=1 | c=64 | c=128 | c=192 | c=256 | c=384 | Max within SLO | RTX 4090 |
+|---|---|---|---|---|---|---|---|---|---|
+| **fp16** | **97.59%** | 47 / 15 ms | 563 / 112 ms | 566 / 215 ms | 568 / 319 ms | 571 / 420 ms | 589 / 605 ms ✗ | **571 rps** | 402 rps |
+| bf16 | 97.02% | 48 / 15 ms | 467 / 133 ms | 469 / 259 ms | 470 / 383 ms | 477 / 505 ms | 485 / 745 ms ✗ | 477 rps | 318 rps |
+| fp32 | 97.50% | 39 / 18 ms | 130 / 510 ms | 134 / 968 ms ✗ | – | – | – | 130 rps | 94 rps |
+| fp16, export without the RoPE table | 96.93% | 41 / 16 ms | 402 / 165 ms | 410 / 308 ms | 414 / 448 ms | 418 / 583 ms ✗ | – | 414 rps | 403 rps |
+
+- fp16 is **+42%** over the shared 4090 (571 vs 402 rps); single-request latency is unchanged (~15 ms, most of it the batching window).
+- The RoPE-table export matters much more on Blackwell: on the 4090 both exports ran at ~400 rps; on the 5090 the RoPE-table graph is 38% faster (571 vs 414). Presumably TensorRT picks better kernels for it on sm_120; not investigated.
+- The GPU saturates at c=64: from c=64 to 384 fp16 only goes 563 → 589 rps and latency grows as concurrency / throughput. Each precision plateaus at a different level (571 / 477 / 130), so the limit is GPU compute, not the Go server. "Max within SLO" landing on c=256 is the sweep grid; the real limit for fp16 is around c≈300 at the same throughput.
+- Agreement is within ±0.3 points of the 4090 for every precision.
+- The FP8 graph (quantized for Ada) did not produce a result on this machine; not investigated yet.
+
+## 6. Where the next gains are
+
+Measured on the same 4436-question workload, not yet implemented:
+
+- **Single-option questions.** 33.7% of questions (30.7% of tokens) had exactly one option, whose answer is always probability 1.0. Answering them without a forward pass should give roughly +40% throughput with identical results.
+- **Padding.** Batches of 48 questions in arrival order waste 28% of the token budget on padding; sorting by length before batching brings it to ~1%. At the engine level on a 4090, batches of 16 ran at 1002 questions/s vs 708 for batches of 48.
+- **Optimization profile.** The default TensorRT profile optimizes for 512 tokens; the median question here is 411 tokens (p90 504).
+
+## 7. Reproducing
 
 `scripts/bench_sweep.sh` (Linux) and `windows/run_sweep.ps1` (Windows) run parity plus a concurrency sweep for each precision. Use your own request log in the `examples/basic.jsonl` format for meaningful numbers: throughput depends heavily on tokens per question and questions per request.
