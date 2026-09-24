@@ -57,7 +57,7 @@ Precision (TensorRT, one GPU, argmax agreement with the Python bf16 reference on
 
 GPUs were shared with other services; same-config run-to-run noise was about 5%.
 
-On a dedicated **RTX 5090 D** (Windows) the same fp16 setup serves **571 rps** on one GPU (+42%), with 97.59% agreement and ~15 ms single-request latency. Details and caveats: [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+On a dedicated **RTX 5090 D** (Windows) the same fp16 setup serves **571 rps** on one GPU (+42%), and **666 rps** with `BATCH_MAX=16`, with 97.59% agreement and ~15 ms single-request latency. Details and caveats: [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
 ## Quick start (Linux, NVIDIA GPU)
 
@@ -108,7 +108,7 @@ The base checkpoint is not tuned for any task (Laya's model card reports near-ch
 | `TRT_SEQ_MIN/OPT/MAX`, `TRT_KMAX` | 16/512/1024, 32 | TensorRT dynamic-shape profile |
 | `TRT_LN_FP32`, `TRT_WORKSPACE` | off, TRT default | keep LayerNorm in fp32; cap builder workspace (bytes) |
 | `GOSERVE_GPUS` | `0,1` | GPUs, one session each (repeat an id for more sessions) |
-| `BATCH_MAX` | 48 | max **questions** per batch (TensorRT profile batch max is 64) |
+| `BATCH_MAX` | 48 | max **questions** per batch (TensorRT profile batch max is 64); 16 was 17% faster on an RTX 5090 D |
 | `BATCH_WINDOW_MS` | 10 | batching window |
 | `BUILD_WORKERS` | NumCPU | parallel tokenization/sequence building |
 | `GOSERVE_MEM_LIMIT` | 6 GiB | CUDA arena limit per session, comma-separated per session |

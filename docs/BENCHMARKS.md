@@ -107,12 +107,26 @@ One GPU (rps / p95; c=1 shows p50):
 - Agreement is within ±0.3 points of the 4090 for every precision.
 - The FP8 graph (quantized for Ada) did not produce a result on this machine; not investigated yet.
 
+Batch size (fp16, rps / p95, one run per cell):
+
+| `BATCH_MAX` | c=320 | c=420 | c=520 | Max within SLO |
+|---|---|---|---|---|
+| 48 (default, table above) | – | – | – | 571 rps (c=256; c=384 fails) |
+| **16** | 647 / 451 ms | **666 / 575 ms** | 659 / 728 ms ✗ | **666 rps** |
+| 24 | 661 / 445 ms | 664 / 583 ms | 664 / 723 ms ✗ | 664 rps (p99 593 ms, at the edge) |
+| 32 | 631 / 470 ms | 633 / 616 ms ✗ | – | 631 rps |
+
+- `BATCH_MAX=16` is **17% faster** than 48 (666 vs 571 rps) and holds the SLO up to c≈420 instead of ≈300. 24 is the same within noise; 32 is in between.
+- Smaller batches pad less: every question in a batch is padded to the longest one, so bigger batches spend more GPU time on padding tokens, while the per-batch overhead is negligible on this GPU. This matches the engine-level 4090 result (batch 16: 1002 questions/s vs batch 48: 708).
+- Throughput still plateaus at ~660 rps (c=520), so the limit remains the GPU.
+- Use `BATCH_MAX=16` on the 5090. The default stays 48 until the 4090 is re-measured through goserve.
+
 ## 6. Where the next gains are
 
 Measured on the same 4436-question workload, not yet implemented:
 
 - **Single-option questions.** 33.7% of questions (30.7% of tokens) had exactly one option, whose answer is always probability 1.0. Answering them without a forward pass should give roughly +40% throughput with identical results.
-- **Padding.** Batches of 48 questions in arrival order waste 28% of the token budget on padding; sorting by length before batching brings it to ~1%. At the engine level on a 4090, batches of 16 ran at 1002 questions/s vs 708 for batches of 48.
+- **Padding.** Batches of 48 questions in arrival order waste 28% of the token budget on padding (24% at 16); sorting by length before batching brings it to ~1%. Smaller batches already recover part of this (+17% on the 5090, section 5); length bucketing should recover most of the rest.
 - **Optimization profile.** The default TensorRT profile optimizes for 512 tokens; the median question here is 411 tokens (p90 504).
 
 ## 7. Reproducing
